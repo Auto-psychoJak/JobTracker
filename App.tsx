@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TextInput, Button, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
 
-// Define the Job type
 type Job = {
   id: string;
   date: string;
@@ -12,16 +12,33 @@ type Job = {
 };
 
 export default function App() {
-  const [jobs, setJobs] = useState<Job[]>([
-    { id: '1', date: '2025-01-01', location: 'City A', paymentStatus: 'Paid', paymentMethod: 'Cash' },
-    { id: '2', date: '2025-01-02', location: 'City B', paymentStatus: 'Unpaid', paymentMethod: 'Check' },
-  ]);
-
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
+
+  // Save jobs to AsyncStorage
+  const saveJobs = async (jobsToSave: Job[]) => {
+    try {
+      await AsyncStorage.setItem('jobs', JSON.stringify(jobsToSave));
+    } catch (error) {
+      console.error('Error saving jobs:', error);
+    }
+  };
+
+  // Load jobs from AsyncStorage
+  const loadJobs = async () => {
+    try {
+      const savedJobs = await AsyncStorage.getItem('jobs');
+      if (savedJobs) {
+        setJobs(JSON.parse(savedJobs));
+      }
+    } catch (error) {
+      console.error('Error loading jobs:', error);
+    }
+  };
 
   // Add or edit a job
   const addJob = () => {
@@ -29,43 +46,52 @@ export default function App() {
       Alert.alert('Error', 'All fields are required');
       return;
     }
-  
+
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) {
       Alert.alert('Error', 'Invalid date format. Use YYYY-MM-DD');
       return;
     }
-  
+
     if (editingJobId) {
-      setJobs(jobs.map((job) =>
+      const updatedJobs = jobs.map((job) =>
         job.id === editingJobId
           ? { ...job, date, location, paymentStatus, paymentMethod }
           : job
-      ));
+      );
+      setJobs(updatedJobs);
+      saveJobs(updatedJobs); // Save changes to AsyncStorage
       setEditingJobId(null);
     } else {
       const newJob: Job = {
-        id: uuid.v4() as string, // Generate a unique ID
+        id: uuid.v4() as string,
         date,
         location,
         paymentStatus,
         paymentMethod,
       };
-      setJobs([...jobs, newJob]);
+      const updatedJobs = [...jobs, newJob];
+      setJobs(updatedJobs);
+      saveJobs(updatedJobs); // Save changes to AsyncStorage
     }
-  
+
     setDate('');
     setLocation('');
     setPaymentStatus('');
     setPaymentMethod('');
   };
-  
-  
 
   // Delete a job
   const deleteJob = (id: string) => {
-    setJobs(jobs.filter((job) => job.id !== id));
+    const updatedJobs = jobs.filter((job) => job.id !== id);
+    setJobs(updatedJobs);
+    saveJobs(updatedJobs); // Save changes to AsyncStorage
   };
+
+  // Load jobs when the app starts
+  useEffect(() => {
+    loadJobs();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -143,7 +169,6 @@ export default function App() {
           </View>
         )}
       />
-
     </View>
   );
 }
