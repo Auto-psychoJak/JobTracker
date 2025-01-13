@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TextInput, Button, Alert } from 'react-native';
+import uuid from 'react-native-uuid';
 
 // Define the Job type
 type Job = {
@@ -20,38 +21,52 @@ export default function App() {
   const [location, setLocation] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
-  // Function to add a new job
+  // Add or edit a job
   const addJob = () => {
     if (!date || !location || !paymentStatus || !paymentMethod) {
       Alert.alert('Error', 'All fields are required');
       return;
     }
   
-    // Check if the date is in the correct format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) {
       Alert.alert('Error', 'Invalid date format. Use YYYY-MM-DD');
       return;
     }
   
-    const newJob: Job = {
-      id: (jobs.length + 1).toString(),
-      date,
-      location,
-      paymentStatus,
-      paymentMethod,
-    };
+    if (editingJobId) {
+      setJobs(jobs.map((job) =>
+        job.id === editingJobId
+          ? { ...job, date, location, paymentStatus, paymentMethod }
+          : job
+      ));
+      setEditingJobId(null);
+    } else {
+      const newJob: Job = {
+        id: uuid.v4() as string, // Generate a unique ID
+        date,
+        location,
+        paymentStatus,
+        paymentMethod,
+      };
+      setJobs([...jobs, newJob]);
+    }
   
-    setJobs([...jobs, newJob]);
     setDate('');
     setLocation('');
     setPaymentStatus('');
     setPaymentMethod('');
   };
-  const deleteJob = (id: string) => {   //delete button added
+  
+  
+
+  // Delete a job
+  const deleteJob = (id: string) => {
     setJobs(jobs.filter((job) => job.id !== id));
   };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Job Tracker</Text>
@@ -82,23 +97,53 @@ export default function App() {
           value={paymentMethod}
           onChangeText={setPaymentMethod}
         />
-        <Button title="Add Job" onPress={addJob} />
+        <Button title={editingJobId ? "Update Job" : "Add Job"} onPress={addJob} />
+        {editingJobId && (
+          <Button
+            title="Cancel Edit"
+            onPress={() => {
+              setEditingJobId(null);
+              setDate('');
+              setLocation('');
+              setPaymentStatus('');
+              setPaymentMethod('');
+            }}
+            color="#FF5C5C"
+          />
+        )}
       </View>
 
       {/* Job List */}
       <FlatList
-       data={jobs}
-       keyExtractor={(item) => item.id}
-       renderItem={({ item }) => (
-         <View style={styles.jobCard}>
-           <Text>Date: {item.date}</Text>
-           <Text>Location: {item.location}</Text>
-           <Text>Status: {item.paymentStatus}</Text>
-           <Text>Payment: {item.paymentMethod}</Text>
-           <Button title="Delete" onPress={() => deleteJob(item.id)} color="#FF5C5C" />
-         </View>
-       )}
+        data={jobs}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.jobCard}>
+            <Text>Date: {item.date}</Text>
+            <Text>Location: {item.location}</Text>
+            <Text>Status: {item.paymentStatus}</Text>
+            <Text>Payment: {item.paymentMethod}</Text>
+            <View style={styles.buttonRow}>
+              <Button
+                title="Edit"
+                onPress={() => {
+                  setEditingJobId(item.id);
+                  setDate(item.date);
+                  setLocation(item.location);
+                  setPaymentStatus(item.paymentStatus);
+                  setPaymentMethod(item.paymentMethod);
+                }}
+              />
+              <Button
+                title="Delete"
+                onPress={() => deleteJob(item.id)}
+                color="#FF5C5C"
+              />
+            </View>
+          </View>
+        )}
       />
+
     </View>
   );
 }
@@ -125,5 +170,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
 });
