@@ -8,10 +8,12 @@ import {
   Button,
   Alert,
   Platform,
+  Switch,
   TouchableOpacity,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNPickerSelect from 'react-native-picker-select';
 import uuid from 'react-native-uuid';
 
 type Job = {
@@ -64,8 +66,8 @@ export default function App() {
   };
 
   const addJob = () => {
-    if (!companyName || !address || !city || !yards || !paymentStatus || !paymentMethod) {
-      Alert.alert('Error', 'All fields are required');
+    if (!address || !city || !yards || !paymentStatus || !paymentMethod) {
+      Alert.alert('Error', 'All fields except "Company Name" are required');
       return;
     }
 
@@ -145,6 +147,7 @@ export default function App() {
 
       {/* Job Form */}
       <View style={styles.form}>
+        {/* Date Picker */}
         <TouchableOpacity
           onPress={() => setShowDatePicker(true)}
           style={styles.datePicker}
@@ -159,52 +162,76 @@ export default function App() {
             onChange={onDateChange}
           />
         )}
+
+        {/* Company Name */}
         <TextInput
           style={styles.input}
-          placeholder="Company Name"
+          placeholder="Company Name (optional)"
           value={companyName}
           onChangeText={setCompanyName}
         />
+
+        {/* Address */}
         <TextInput
           style={styles.input}
           placeholder="Address"
           value={address}
           onChangeText={setAddress}
         />
+
+        {/* City */}
         <TextInput
           style={styles.input}
           placeholder="City"
           value={city}
           onChangeText={setCity}
         />
+
+        {/* Yards */}
         <TextInput
           style={styles.input}
           placeholder="Yards (e.g., 3)"
           value={yards}
           keyboardType="numeric"
-          onChangeText={setYards}
+          onChangeText={(text) => setYards(text.replace(/[^0-9]/g, ''))}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Payment Status (Paid/Unpaid)"
-          value={paymentStatus}
-          onChangeText={(text) => setPaymentStatus(text as 'Paid' | 'Unpaid')}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Payment Method (Cash/Check/Zelle/Charge)"
+
+        {/* Payment Status */}
+        <View style={styles.switchContainer}>
+          <Text>Payment Status: {paymentStatus}</Text>
+          <Switch
+            value={paymentStatus === 'Paid'}
+            onValueChange={(value) => setPaymentStatus(value ? 'Paid' : 'Unpaid')}
+          />
+        </View>
+
+        {/* Payment Method */}
+        <RNPickerSelect
+          onValueChange={(value) => setPaymentMethod(value)}
+          items={[
+            { label: 'Cash', value: 'Cash' },
+            { label: 'Check', value: 'Check' },
+            { label: 'Zelle', value: 'Zelle' },
+            { label: 'Charge', value: 'Charge' },
+          ]}
           value={paymentMethod}
-          onChangeText={(text) =>
-            setPaymentMethod(text as 'Cash' | 'Check' | 'Zelle' | 'Charge')
-          }
+          placeholder={{ label: 'Select Payment Method', value: null }}
+          style={pickerSelectStyles}
         />
+
+        {/* Notes */}
         <TextInput
-          style={styles.input}
+          style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
           placeholder="Notes"
           value={notes}
           onChangeText={setNotes}
+          multiline
         />
+
+        {/* Add/Update Button */}
         <Button title={editingJobId ? 'Update Job' : 'Add Job'} onPress={addJob} />
+
+        {/* Cancel Edit Button */}
         {editingJobId && (
           <Button
             title="Cancel Edit"
@@ -288,6 +315,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   jobCard: {
     padding: 15,
     marginVertical: 10,
@@ -305,3 +338,30 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
+
+const pickerSelectStyles = {
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    color: 'black',
+    paddingRight: 30, // For dropdown arrow
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    color: 'black',
+    paddingRight: 30, // For dropdown arrow
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+};
