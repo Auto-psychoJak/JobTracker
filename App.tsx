@@ -17,18 +17,26 @@ import uuid from 'react-native-uuid';
 type Job = {
   id: string;
   date: string;
-  location: string;
-  paymentStatus: string;
-  paymentMethod: string;
+  companyName: string;
+  address: string;
+  city: string;
+  yards: number;
+  paymentStatus: 'Paid' | 'Unpaid';
+  paymentMethod: 'Cash' | 'Check' | 'Zelle' | 'Charge';
+  notes: string;
 };
 
 export default function App() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [location, setLocation] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [yards, setYards] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState<'Paid' | 'Unpaid'>('Paid');
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Check' | 'Zelle' | 'Charge'>('Cash');
+  const [notes, setNotes] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
   const saveJobs = async (jobsToSave: Job[]) => {
@@ -43,7 +51,12 @@ export default function App() {
     try {
       const savedJobs = await AsyncStorage.getItem('jobs');
       if (savedJobs) {
-        setJobs(JSON.parse(savedJobs));
+        const parsedJobs: Job[] = JSON.parse(savedJobs).map((job: any) => ({
+          ...job,
+          paymentStatus: job.paymentStatus as 'Paid' | 'Unpaid',
+          paymentMethod: job.paymentMethod as 'Cash' | 'Check' | 'Zelle' | 'Charge',
+        }));
+        setJobs(parsedJobs);
       }
     } catch (error) {
       console.error('Error loading jobs:', error);
@@ -51,17 +64,27 @@ export default function App() {
   };
 
   const addJob = () => {
-    if (!date || !location || !paymentStatus || !paymentMethod) {
+    if (!companyName || !address || !city || !yards || !paymentStatus || !paymentMethod) {
       Alert.alert('Error', 'All fields are required');
       return;
     }
 
-    const formattedDate = date.toISOString().split('T')[0]; // Convert Date to YYYY-MM-DD format
+    const formattedDate = date.toISOString().split('T')[0];
 
     if (editingJobId) {
       const updatedJobs = jobs.map((job) =>
         job.id === editingJobId
-          ? { ...job, date: formattedDate, location, paymentStatus, paymentMethod }
+          ? {
+              ...job,
+              date: formattedDate,
+              companyName,
+              address,
+              city,
+              yards: parseFloat(yards),
+              paymentStatus,
+              paymentMethod,
+              notes,
+            }
           : job
       );
       setJobs(updatedJobs);
@@ -71,19 +94,27 @@ export default function App() {
       const newJob: Job = {
         id: uuid.v4() as string,
         date: formattedDate,
-        location,
+        companyName,
+        address,
+        city,
+        yards: parseFloat(yards),
         paymentStatus,
         paymentMethod,
+        notes,
       };
       const updatedJobs = [...jobs, newJob];
       setJobs(updatedJobs);
       saveJobs(updatedJobs);
     }
 
-    setDate(new Date()); // Reset to today's date
-    setLocation('');
-    setPaymentStatus('');
-    setPaymentMethod('');
+    setDate(new Date());
+    setCompanyName('');
+    setAddress('');
+    setCity('');
+    setYards('');
+    setPaymentStatus('Paid');
+    setPaymentMethod('Cash');
+    setNotes('');
   };
 
   const deleteJob = (id: string) => {
@@ -95,12 +126,14 @@ export default function App() {
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      // Normalize the date to prevent timezone issues
-      const localDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      const localDate = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate()
+      );
       setDate(localDate);
     }
   };
-  
 
   useEffect(() => {
     loadJobs();
@@ -128,21 +161,48 @@ export default function App() {
         )}
         <TextInput
           style={styles.input}
-          placeholder="Location"
-          value={location}
-          onChangeText={setLocation}
+          placeholder="Company Name"
+          value={companyName}
+          onChangeText={setCompanyName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Address"
+          value={address}
+          onChangeText={setAddress}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="City"
+          value={city}
+          onChangeText={setCity}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Yards (e.g., 3)"
+          value={yards}
+          keyboardType="numeric"
+          onChangeText={setYards}
         />
         <TextInput
           style={styles.input}
           placeholder="Payment Status (Paid/Unpaid)"
           value={paymentStatus}
-          onChangeText={setPaymentStatus}
+          onChangeText={(text) => setPaymentStatus(text as 'Paid' | 'Unpaid')}
         />
         <TextInput
           style={styles.input}
-          placeholder="Payment Method (Cash/Check/Zelle)"
+          placeholder="Payment Method (Cash/Check/Zelle/Charge)"
           value={paymentMethod}
-          onChangeText={setPaymentMethod}
+          onChangeText={(text) =>
+            setPaymentMethod(text as 'Cash' | 'Check' | 'Zelle' | 'Charge')
+          }
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Notes"
+          value={notes}
+          onChangeText={setNotes}
         />
         <Button title={editingJobId ? 'Update Job' : 'Add Job'} onPress={addJob} />
         {editingJobId && (
@@ -151,9 +211,13 @@ export default function App() {
             onPress={() => {
               setEditingJobId(null);
               setDate(new Date());
-              setLocation('');
-              setPaymentStatus('');
-              setPaymentMethod('');
+              setCompanyName('');
+              setAddress('');
+              setCity('');
+              setYards('');
+              setPaymentStatus('Paid');
+              setPaymentMethod('Cash');
+              setNotes('');
             }}
             color="#FF5C5C"
           />
@@ -166,19 +230,27 @@ export default function App() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.jobCard}>
+            <Text>Company: {item.companyName}</Text>
+            <Text>Address: {item.address}</Text>
+            <Text>City: {item.city}</Text>
+            <Text>Yards: {item.yards}</Text>
             <Text>Date: {item.date}</Text>
-            <Text>Location: {item.location}</Text>
             <Text>Status: {item.paymentStatus}</Text>
             <Text>Payment: {item.paymentMethod}</Text>
+            <Text>Notes: {item.notes}</Text>
             <View style={styles.buttonRow}>
               <Button
                 title="Edit"
                 onPress={() => {
                   setEditingJobId(item.id);
                   setDate(new Date(item.date));
-                  setLocation(item.location);
+                  setCompanyName(item.companyName);
+                  setAddress(item.address);
+                  setCity(item.city);
+                  setYards(item.yards.toString());
                   setPaymentStatus(item.paymentStatus);
                   setPaymentMethod(item.paymentMethod);
+                  setNotes(item.notes);
                 }}
               />
               <Button
