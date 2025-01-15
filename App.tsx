@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TextInput, Button, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TextInput,
+  Button,
+  Alert,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
 
@@ -13,13 +24,13 @@ type Job = {
 
 export default function App() {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [location, setLocation] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
-  // Save jobs to AsyncStorage
   const saveJobs = async (jobsToSave: Job[]) => {
     try {
       await AsyncStorage.setItem('jobs', JSON.stringify(jobsToSave));
@@ -28,7 +39,6 @@ export default function App() {
     }
   };
 
-  // Load jobs from AsyncStorage
   const loadJobs = async () => {
     try {
       const savedJobs = await AsyncStorage.getItem('jobs');
@@ -40,55 +50,58 @@ export default function App() {
     }
   };
 
-  // Add or edit a job
   const addJob = () => {
     if (!date || !location || !paymentStatus || !paymentMethod) {
       Alert.alert('Error', 'All fields are required');
       return;
     }
 
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) {
-      Alert.alert('Error', 'Invalid date format. Use YYYY-MM-DD');
-      return;
-    }
+    const formattedDate = date.toISOString().split('T')[0]; // Convert Date to YYYY-MM-DD format
 
     if (editingJobId) {
       const updatedJobs = jobs.map((job) =>
         job.id === editingJobId
-          ? { ...job, date, location, paymentStatus, paymentMethod }
+          ? { ...job, date: formattedDate, location, paymentStatus, paymentMethod }
           : job
       );
       setJobs(updatedJobs);
-      saveJobs(updatedJobs); // Save changes to AsyncStorage
+      saveJobs(updatedJobs);
       setEditingJobId(null);
     } else {
       const newJob: Job = {
         id: uuid.v4() as string,
-        date,
+        date: formattedDate,
         location,
         paymentStatus,
         paymentMethod,
       };
       const updatedJobs = [...jobs, newJob];
       setJobs(updatedJobs);
-      saveJobs(updatedJobs); // Save changes to AsyncStorage
+      saveJobs(updatedJobs);
     }
 
-    setDate('');
+    setDate(new Date()); // Reset to today's date
     setLocation('');
     setPaymentStatus('');
     setPaymentMethod('');
   };
 
-  // Delete a job
   const deleteJob = (id: string) => {
     const updatedJobs = jobs.filter((job) => job.id !== id);
     setJobs(updatedJobs);
-    saveJobs(updatedJobs); // Save changes to AsyncStorage
+    saveJobs(updatedJobs);
   };
 
-  // Load jobs when the app starts
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      // Normalize the date to prevent timezone issues
+      const localDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+      setDate(localDate);
+    }
+  };
+  
+
   useEffect(() => {
     loadJobs();
   }, []);
@@ -99,12 +112,20 @@ export default function App() {
 
       {/* Job Form */}
       <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder="Date (YYYY-MM-DD)"
-          value={date}
-          onChangeText={setDate}
-        />
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(true)}
+          style={styles.datePicker}
+        >
+          <Text>{date.toISOString().split('T')[0]}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={onDateChange}
+          />
+        )}
         <TextInput
           style={styles.input}
           placeholder="Location"
@@ -123,13 +144,13 @@ export default function App() {
           value={paymentMethod}
           onChangeText={setPaymentMethod}
         />
-        <Button title={editingJobId ? "Update Job" : "Add Job"} onPress={addJob} />
+        <Button title={editingJobId ? 'Update Job' : 'Add Job'} onPress={addJob} />
         {editingJobId && (
           <Button
             title="Cancel Edit"
             onPress={() => {
               setEditingJobId(null);
-              setDate('');
+              setDate(new Date());
               setLocation('');
               setPaymentStatus('');
               setPaymentMethod('');
@@ -154,7 +175,7 @@ export default function App() {
                 title="Edit"
                 onPress={() => {
                   setEditingJobId(item.id);
-                  setDate(item.date);
+                  setDate(new Date(item.date));
                   setLocation(item.location);
                   setPaymentStatus(item.paymentStatus);
                   setPaymentMethod(item.paymentMethod);
@@ -184,6 +205,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
     backgroundColor: '#fff',
+  },
+  datePicker: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   jobCard: {
     padding: 15,
