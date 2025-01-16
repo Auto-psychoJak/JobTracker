@@ -206,14 +206,14 @@ export default function App() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.jobCard}>
-            <Text>Company: {item.companyName}</Text>
-            <Text>Address: {item.address}</Text>
-            <Text>City: {item.city}</Text>
-            <Text>Yards: {item.yards}</Text>
-            <Text>Date: {item.date}</Text>
-            <Text>Status: {item.paymentStatus}</Text>
-            <Text>Payment: {item.paymentMethod}</Text>
-            <Text>Notes: {item.notes}</Text>
+            <Text>{item.date}</Text>
+            <Text>{item.companyName}</Text>
+            <Text>{item.address}</Text>
+            <Text>{item.city}</Text>
+            <Text>{item.yards}</Text>
+            <Text>{item.paymentStatus}</Text>
+            <Text>{item.paymentMethod}</Text>
+            <Text>{item.notes}</Text>
             <View style={styles.buttonRow}>
               <Button title="Edit" onPress={() => {
                 setEditingJobId(item.id);
