@@ -11,6 +11,7 @@ import {
   Modal,
   TouchableOpacity,
   Platform,
+  ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,10 +28,11 @@ type Job = {
   paymentStatus: 'Paid' | 'Unpaid';
   checkNumber?: string;
   billingInfo?: {
-    cardNumber: string;
-    expiration: string;
-    cvv: string;
-  } | null; // Allow null here
+    companyName?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+  } | null;
   notes: string;
 };
 
@@ -47,7 +49,7 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Check' | 'Zelle' |'Square'| 'Charge'>('Cash');
   const [paymentStatus, setPaymentStatus] = useState<'Paid' | 'Unpaid'>('Paid');
   const [checkNumber, setCheckNumber] = useState('');
-  const [billingInfo, setBillingInfo] = useState({ cardNumber: '', expiration: '', cvv: '' });
+  const [billingInfo, setBillingInfo] = useState({ companyName: '', address: '', phone: '' , email: '' });
   const [notes, setNotes] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
@@ -130,7 +132,7 @@ export default function App() {
     setPaymentMethod('Cash');
     setPaymentStatus('Paid');
     setCheckNumber('');
-    setBillingInfo({ cardNumber: '', expiration: '', cvv: '' });
+    setBillingInfo({ companyName: '', address: '', phone: '' , email: '' });
     setNotes('');
   };
 
@@ -153,6 +155,7 @@ export default function App() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
             <Text style={styles.modalTitle}>{editingJobId ? 'Edit Job' : 'New Job'}</Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
@@ -179,7 +182,7 @@ export default function App() {
             {/* Payment Method */}
             <View style={styles.radioGroup}>
               <Text style={styles.sectionTitle}>Payment Method:</Text>
-              {['Cash', 'Check', 'Zelle', 'Charge'].map((method) => (
+              {['Cash', 'Check', 'Zelle','Square', 'Charge'].map((method) => (
                 <TouchableOpacity
                   key={method}
                   style={styles.radioOption}
@@ -202,34 +205,48 @@ export default function App() {
               />
             )}
 
-            {paymentMethod === 'Charge' && (
-              <View>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Card Number"
-                  value={billingInfo.cardNumber}
-                  onChangeText={(text) => setBillingInfo({ ...billingInfo, cardNumber: text })}
-                  keyboardType="numeric"
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Expiration Date (MM/YY)"
-                  value={billingInfo.expiration}
-                  onChangeText={(text) => setBillingInfo({ ...billingInfo, expiration: text })}
-                />
-                <TextInput
-                  style={styles.input}
-                  placeholder="CVV"
-                  value={billingInfo.cvv}
-                  onChangeText={(text) => setBillingInfo({ ...billingInfo, cvv: text })}
-                  keyboardType="numeric"
-                />
-              </View>
+          {paymentMethod === 'Charge' && (
+            <View>
+              <TextInput
+                style={styles.input}
+                placeholder="Company Name"
+                value={billingInfo?.companyName || ''}
+                onChangeText={(text) =>
+                  setBillingInfo((prev) => ({ ...prev, companyName: text }))
+                }
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Address"
+                value={billingInfo?.address || ''}
+                onChangeText={(text) =>
+                  setBillingInfo((prev) => ({ ...prev, address: text }))
+                }
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Phone"
+                value={billingInfo?.phone || ''}
+                onChangeText={(text) =>
+                  setBillingInfo((prev) => ({ ...prev, phone: text }))
+                }
+                keyboardType="phone-pad"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={billingInfo?.email || ''}
+                onChangeText={(text) =>
+                  setBillingInfo((prev) => ({ ...prev, email: text }))
+                }
+                keyboardType="email-address"
+              />
+            </View>
             )}
-
             <TextInput style={[styles.input, { height: 100, textAlignVertical: 'top' }]} placeholder="Notes" value={notes} onChangeText={setNotes} multiline />
             <Button title={editingJobId ? 'Update Job' : 'Add Job'} onPress={addJob} />
             <Button title="Cancel" onPress={closeModal} color="#FF5C5C" />
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -249,8 +266,10 @@ export default function App() {
             {item.paymentMethod === 'Check' && <Text>{item.checkNumber}</Text>}
             {item.paymentMethod === 'Charge' && (
               <View>
-                <Text>Card Number: {item.billingInfo?.cardNumber}</Text>
-                <Text>Expiration: {item.billingInfo?.expiration}</Text>
+                <Text>Company Name: {item.billingInfo?.companyName}</Text>
+                <Text>Address: {item.billingInfo?.address}</Text>
+                <Text>Phone: {item.billingInfo?.phone}</Text>
+                <Text>Email: {item.billingInfo?.email}</Text>
               </View>
             )}
             <Text>{item.paymentStatus}</Text>
@@ -266,7 +285,7 @@ export default function App() {
                 setPaymentMethod(item.paymentMethod);
                 setPaymentStatus(item.paymentStatus);
                 setCheckNumber(item.checkNumber || '');
-                setBillingInfo(item.billingInfo || { cardNumber: '', expiration: '', cvv: '' });
+                setBillingInfo(item.billingInfo || {companyName: '', address: '', phone: '' , email: '' });
                 setNotes(item.notes);
                 openModal();
               }} />
