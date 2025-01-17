@@ -49,7 +49,9 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Check' | 'Zelle' |'Square'| 'Charge'>('Cash');
   const [paymentStatus, setPaymentStatus] = useState<'Paid' | 'Unpaid'>('Paid');
   const [checkNumber, setCheckNumber] = useState('');
+
   const [billingInfo, setBillingInfo] = useState({ companyName: '', address: '', phone: '' , email: '' });
+
   const [notes, setNotes] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
@@ -212,7 +214,7 @@ export default function App() {
                 placeholder="Company Name"
                 value={billingInfo?.companyName || ''}
                 onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, companyName: text }))
+                  setBillingInfo((prev) => ({ ...prev, companyName: text}))
                 }
               />
               <TextInput
@@ -220,7 +222,7 @@ export default function App() {
                 placeholder="Address"
                 value={billingInfo?.address || ''}
                 onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, address: text }))
+                  setBillingInfo((prev) => ({ ...prev, address: text}))
                 }
               />
               <TextInput
@@ -228,7 +230,7 @@ export default function App() {
                 placeholder="Phone"
                 value={billingInfo?.phone || ''}
                 onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, phone: text }))
+                  setBillingInfo((prev) => ({ ...prev, phone: text}))
                 }
                 keyboardType="phone-pad"
               />
@@ -237,7 +239,7 @@ export default function App() {
                 placeholder="Email"
                 value={billingInfo?.email || ''}
                 onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, email: text }))
+                  setBillingInfo((prev) => ({ ...prev, email: text || ''}))
                 }
                 keyboardType="email-address"
               />
@@ -267,28 +269,37 @@ export default function App() {
             {item.paymentMethod === 'Charge' && (
               <View>
                 <Text>Company Name: {item.billingInfo?.companyName}</Text>
-                <Text>Address: {item.billingInfo?.address}</Text>
-                <Text>Phone: {item.billingInfo?.phone}</Text>
-                <Text>Email: {item.billingInfo?.email}</Text>
+                <Text>Address:      {item.billingInfo?.address    }</Text>
+                <Text>Phone:        {item.billingInfo?.phone      }</Text>
+                <Text>Email:        {item.billingInfo?.email      }</Text>
               </View>
             )}
             <Text>{item.paymentStatus}</Text>
             <Text>{item.notes}</Text>
             <View style={styles.buttonRow}>
-              <Button title="Edit" onPress={() => {
-                setEditingJobId(item.id);
-                setDate(new Date(item.date));
-                setCompanyName(item.companyName);
-                setAddress(item.address);
-                setCity(item.city);
-                setYards(item.yards.toString());
-                setPaymentMethod(item.paymentMethod);
-                setPaymentStatus(item.paymentStatus);
-                setCheckNumber(item.checkNumber || '');
-                setBillingInfo(item.billingInfo || {companyName: '', address: '', phone: '' , email: '' });
-                setNotes(item.notes);
-                openModal();
-              }} />
+            <Button title="Edit" onPress={() => {
+              setEditingJobId(item.id);
+              setDate(new Date(item.date));
+              setCompanyName(item.companyName);
+              setAddress(item.address);
+              setCity(item.city);
+              setYards(item.yards.toString());
+              setPaymentMethod(item.paymentMethod);
+              setPaymentStatus(item.paymentStatus);
+              setCheckNumber(item.checkNumber || '');
+              setBillingInfo(
+              item.billingInfo? {
+              companyName: item.billingInfo.companyName || '',
+              address: item.billingInfo.address || '',
+              phone: item.billingInfo.phone || '',
+              email: item.billingInfo.email || '',
+            }
+          : { companyName: '', address: '', phone: '', email: '' }
+      );
+      setNotes(item.notes);
+      openModal();
+    }}
+  />
               <Button title="Delete" onPress={() => deleteJob(item.id)} color="#FF5C5C" />
             </View>
           </View>
@@ -305,6 +316,7 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5, backgroundColor: '#fff' },
   datePicker: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10, borderRadius: 5, backgroundColor: '#fff', alignItems: 'center' },
   switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  scrollContainer:{},
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
   modalContent: { width: '90%', backgroundColor: 'white', padding: 20, borderRadius: 10 },
   modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
