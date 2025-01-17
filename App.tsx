@@ -24,6 +24,7 @@ type Job = {
   address: string;
   city: string;
   yards: number;
+  total: number; // New field
   paymentMethod: 'Cash' | 'Check' | 'Zelle' |'Square'|'Charge';
   paymentStatus: 'Paid' | 'Unpaid';
   checkNumber?: string;
@@ -46,6 +47,7 @@ export default function App() {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [yards, setYards] = useState('');
+  const [total, setTotal] = useState<string>(''); // Use a string for easier input handling
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Check' | 'Zelle' |'Square'| 'Charge'>('Cash');
   const [paymentStatus, setPaymentStatus] = useState<'Paid' | 'Unpaid'>('Paid');
   const [checkNumber, setCheckNumber] = useState('');
@@ -67,12 +69,17 @@ export default function App() {
     try {
       const savedJobs = await AsyncStorage.getItem('jobs');
       if (savedJobs) {
-        setJobs(JSON.parse(savedJobs));
+        const parsedJobs = JSON.parse(savedJobs).map((job: any) => ({
+          ...job,
+          total: job.total || 0, // Default value for total
+        }));
+        setJobs(parsedJobs);
       }
     } catch (error) {
       console.error('Error loading jobs:', error);
     }
   };
+  
 
   const deleteJob = (id: string) => {
     const updatedJobs = jobs.filter((job) => job.id !== id);
@@ -82,42 +89,58 @@ export default function App() {
   
 
   const addJob = () => {
-    if (!address || !city || !yards || !paymentStatus || !paymentMethod) {
-      Alert.alert('Error', 'All fields except "Company Name" are required');
+    if (!address || !city || !yards || !paymentMethod || !total) {
+      Alert.alert('Error', 'All required fields must be filled.');
       return;
     }
   
     const formattedDate = date.toISOString().split('T')[0];
   
-    const newJob: Job = {
-      id: uuid.v4() as string,
-      date: formattedDate,
-      companyName,
-      address,
-      city,
-      yards: parseFloat(yards),
-      paymentStatus,
-      paymentMethod,
-      checkNumber: paymentMethod === 'Check' ? checkNumber : undefined,
-      billingInfo: paymentMethod === 'Charge' ? billingInfo : null,
-      notes,
-    };
-  
     if (editingJobId) {
       const updatedJobs = jobs.map((job) =>
-        job.id === editingJobId ? { ...job, ...newJob } : job
+        job.id === editingJobId
+          ? {
+              ...job,
+              date: formattedDate,
+              companyName,
+              address,
+              city,
+              yards: parseFloat(yards),
+              total: parseFloat(total), // Ensure total is saved
+              paymentMethod,
+              paymentStatus,
+              checkNumber: paymentMethod === 'Check' ? checkNumber : undefined,
+              billingInfo: paymentMethod === 'Charge' ? billingInfo : null,
+              notes,
+            }
+          : job
       );
       setJobs(updatedJobs);
       saveJobs(updatedJobs);
       setEditingJobId(null);
     } else {
-      const updatedJobs = [...jobs, newJob];
-      setJobs(updatedJobs);
-      saveJobs(updatedJobs);
+      const newJob: Job = {
+        id: uuid.v4() as string,
+        date: formattedDate,
+        companyName,
+        address,
+        city,
+        yards: parseFloat(yards),
+        total: parseFloat(total), // Ensure total is saved
+        paymentMethod,
+        paymentStatus,
+        checkNumber: paymentMethod === 'Check' ? checkNumber : undefined,
+        billingInfo: paymentMethod === 'Charge' ? billingInfo : null,
+        notes,
+      };
+      setJobs([...jobs, newJob]);
+      saveJobs([...jobs, newJob]);
     }
   
     closeModal();
   };
+  
+  
   
 
   const openModal = () => {
@@ -180,71 +203,79 @@ export default function App() {
             <TextInput style={styles.input} placeholder="Address" value={address} onChangeText={setAddress} />
             <TextInput style={styles.input} placeholder="City" value={city} onChangeText={setCity} />
             <TextInput style={styles.input} placeholder="Yards (e.g., 3)" value={yards} keyboardType="numeric" onChangeText={(text) => setYards(text.replace(/[^0-9]/g, ''))} />
-            
+            <TextInput style={styles.input} placeholder="Total Amount" value={total} onChangeText={(text) => setTotal(text.replace(/[^0-9.]/g, ''))} // Allow only numbers and decimal points
+            keyboardType="numeric"
+            />
+
             {/* Payment Method */}
-            <View style={styles.radioGroup}>
-              <Text style={styles.sectionTitle}>Payment Method:</Text>
-              {['Cash', 'Check', 'Zelle','Square', 'Charge'].map((method) => (
+            <View style={styles.tabsContainer}>
+              {['Cash', 'Check', 'Zelle', 'Charge', 'Square'].map((method) => (
                 <TouchableOpacity
                   key={method}
-                  style={styles.radioOption}
+                  style={[
+                    styles.tab,
+                    paymentMethod === method && styles.activeTab, // Highlight selected tab
+                  ]}
                   onPress={() => setPaymentMethod(method as Job['paymentMethod'])}
                 >
-                  <Text>{method}</Text>
-                  {paymentMethod === method && <View style={styles.radioSelected} />}
+                  <Text style={paymentMethod === method ? styles.activeTabText : styles.tabText}>
+                    {method}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
+
             {/* Sub-Forms */}
             {paymentMethod === 'Check' && (
-              <TextInput
-                style={styles.input}
-                placeholder="Check Number"
-                value={checkNumber}
-                onChangeText={setCheckNumber}
-                keyboardType="numeric"
-              />
+            <TextInput
+              style={styles.input}
+              placeholder="Check Number"
+              value={checkNumber}
+              onChangeText={setCheckNumber}
+              keyboardType="numeric"
+            />
             )}
 
-          {paymentMethod === 'Charge' && (
-            <View>
-              <TextInput
-                style={styles.input}
-                placeholder="Company Name"
-                value={billingInfo?.companyName || ''}
-                onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, companyName: text}))
-                }
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Address"
-                value={billingInfo?.address || ''}
-                onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, address: text}))
-                }
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Phone"
-                value={billingInfo?.phone || ''}
-                onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, phone: text}))
-                }
-                keyboardType="phone-pad"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={billingInfo?.email || ''}
-                onChangeText={(text) =>
-                  setBillingInfo((prev) => ({ ...prev, email: text || ''}))
-                }
-                keyboardType="email-address"
-              />
-            </View>
+            {paymentMethod === 'Charge' && (
+              <View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Company Name"
+                  value={billingInfo?.companyName || ''}
+                  onChangeText={(text) =>
+                    setBillingInfo((prev) => ({ ...prev, companyName: text }))
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Address"
+                  value={billingInfo?.address || ''}
+                  onChangeText={(text) =>
+                    setBillingInfo((prev) => ({ ...prev, address: text }))
+                  }
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Phone"
+                  value={billingInfo?.phone || ''}
+                  onChangeText={(text) =>
+                    setBillingInfo((prev) => ({ ...prev, phone: text }))
+                  }
+                  keyboardType="phone-pad"
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  value={billingInfo?.email || ''}
+                  onChangeText={(text) =>
+                    setBillingInfo((prev) => ({ ...prev, email: text }))
+                  }
+                  keyboardType="email-address"
+                />
+              </View>
             )}
+
             <TextInput style={[styles.input, { height: 100, textAlignVertical: 'top' }]} placeholder="Notes" value={notes} onChangeText={setNotes} multiline />
             <Button title={editingJobId ? 'Update Job' : 'Add Job'} onPress={addJob} />
             <Button title="Cancel" onPress={closeModal} color="#FF5C5C" />
@@ -259,50 +290,28 @@ export default function App() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.jobCard}>
-            <Text>{item.date}</Text>
-            <Text>{item.companyName}</Text>
-            <Text>{item.address}</Text>
-            <Text>{item.city}</Text>
-            <Text>{item.yards}</Text>
-            <Text>{item.paymentMethod}</Text>
-            {item.paymentMethod === 'Check' && <Text>{item.checkNumber}</Text>}
-            {item.paymentMethod === 'Charge' && (
-              <View>
-                <Text>Company Name: {item.billingInfo?.companyName}</Text>
-                <Text>Address:      {item.billingInfo?.address    }</Text>
-                <Text>Phone:        {item.billingInfo?.phone      }</Text>
-                <Text>Email:        {item.billingInfo?.email      }</Text>
-              </View>
-            )}
-            <Text>{item.paymentStatus}</Text>
-            <Text>{item.notes}</Text>
-            <View style={styles.buttonRow}>
-            <Button title="Edit" onPress={() => {
-              setEditingJobId(item.id);
-              setDate(new Date(item.date));
-              setCompanyName(item.companyName);
-              setAddress(item.address);
-              setCity(item.city);
-              setYards(item.yards.toString());
-              setPaymentMethod(item.paymentMethod);
-              setPaymentStatus(item.paymentStatus);
-              setCheckNumber(item.checkNumber || '');
-              setBillingInfo(
-              item.billingInfo? {
-              companyName: item.billingInfo.companyName || '',
-              address: item.billingInfo.address || '',
-              phone: item.billingInfo.phone || '',
-              email: item.billingInfo.email || '',
-            }
-          : { companyName: '', address: '', phone: '', email: '' }
-      );
-      setNotes(item.notes);
-      openModal();
-    }}
-  />
-              <Button title="Delete" onPress={() => deleteJob(item.id)} color="#FF5C5C" />
-            </View>
-          </View>
+  <Text>Company: {item.companyName}</Text>
+  <Text>Address: {item.address}</Text>
+  <Text>City: {item.city}</Text>
+  <Text>Yards: {item.yards}</Text>
+  <Text>Total: ${item.total ? item.total.toFixed(2) : '0.00'}</Text>
+  <Text>Date: {item.date}</Text>
+  <Text>Payment Method: {item.paymentMethod}</Text>
+  {item.paymentMethod === 'Check' && <Text>Check Number: {item.checkNumber}</Text>}
+  {item.paymentMethod === 'Charge' && (
+    <View>
+      <Text>Company: {item.billingInfo?.companyName}</Text>
+      <Text>Address: {item.billingInfo?.address}</Text>
+    </View>
+  )}
+  <Text>Status: {item.paymentStatus}</Text>
+  <Text>Notes: {item.notes}</Text>
+  <View style={styles.buttonRow}>
+    <Button title="Edit" onPress={() => {/* Edit logic */}} />
+    <Button title="Delete" onPress={() => deleteJob(item.id)} color="#FF5C5C" />
+  </View>
+</View>
+
         )}
       />
     </View>
@@ -325,4 +334,27 @@ const styles = StyleSheet.create({
   radioSelected: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#000', marginLeft: 10 },
   jobCard: { padding: 15, marginVertical: 10, backgroundColor: '#fff', borderRadius: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 3 },
   buttonRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 15,
+  },
+  tab: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    backgroundColor: '#f0f0f0',
+  },
+  activeTab: {
+    backgroundColor: '#007BFF',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  activeTabText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
