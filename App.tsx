@@ -106,7 +106,7 @@ export default function App() {
               yards: parseFloat(yards),
               total: parseFloat(total),
               paymentMethod,
-              paymentStatus,
+               paymentStatus, // Save the payment status
               checkNumber: paymentMethod === 'Check' ? checkNumber : undefined,
               billingInfo: paymentMethod === 'Charge' ? billingInfo : null,
               notes,
@@ -217,6 +217,13 @@ export default function App() {
               <TextInput style={styles.input} placeholder="City" value={city} onChangeText={setCity} />
               <TextInput style={styles.input} placeholder="Yards (e.g., 3)" value={yards} keyboardType="numeric" onChangeText={(text) => setYards(text.replace(/[^0-9.]/g, ''))} />
               <TextInput style={styles.input} placeholder="Total Amount" value={total} keyboardType="numeric" onChangeText={(text) => setTotal(text.replace(/[^0-9.]/g, ''))} />
+              <View style={styles.switchContainer}>
+                <Text>Payment Status: {paymentStatus}</Text>
+                <Switch
+                  value={paymentStatus === 'Paid'}
+                  onValueChange={(value) => setPaymentStatus(value ? 'Paid' : 'Unpaid')}
+                />
+              </View>
 
               {/* Payment Method */}
               <View style={styles.tabsContainer}>
@@ -300,11 +307,11 @@ export default function App() {
               item.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
             ]}
           >
-            <Text>Company: {item.companyName}</Text>
+            <Text>{item.companyName}</Text>
             <Text>{item.address}</Text>
             <Text>{item.city}</Text>
             <Text>{item.yards} yrds</Text>
-            <Text>Total: ${item.total.toFixed(2)}</Text>
+            <Text>${item.total.toFixed(2)}</Text>
             <Text>{item.paymentMethod}</Text>
             <View style={styles.buttonRow}>
               <Button title="Edit" onPress={() => {
@@ -401,4 +408,8 @@ const styles = StyleSheet.create({
   paidCard: { backgroundColor: '#d4edda', borderColor: '#c3e6cb', borderWidth: 1 },
   unpaidCard: { backgroundColor: '#f8d7da', borderColor: '#f5c6cb', borderWidth: 1 },
   buttonRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+
+  switchContainer: {
+
+  }
 });
