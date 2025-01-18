@@ -227,20 +227,33 @@ export default function App() {
 
               {/* Payment Method */}
               <View style={styles.tabsContainer}>
-                {['Cash', 'Check', 'Zelle', 'Charge', 'Square'].map((method) => (
-                  <TouchableOpacity
-                    key={method}
-                    style={[
-                      styles.tab,
-                      paymentMethod === method && styles.activeTab,
-                    ]}
-                    onPress={() => setPaymentMethod(method as Job['paymentMethod'])}
-                  >
-                    <Text style={paymentMethod === method ? styles.activeTabText : styles.tabText}>
-                      {method}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {/* Cash Tab */}
+                <TouchableOpacity
+                  style={[styles.tab, styles.cashTab, paymentMethod === 'Cash' && styles.activeTab]}
+                  onPress={() => setPaymentMethod('Cash')}
+                >
+                  <Text style={paymentMethod === 'Cash' ? styles.activeTabText : styles.tabText}>
+                    Cash
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Other Tabs */}
+                <View style={styles.rowContainer}>
+                  {['Check', 'Zelle', 'Charge', 'Square'].map((method) => (
+                    <TouchableOpacity
+                      key={method}
+                      style={[
+                        styles.tab,
+                        paymentMethod === method && styles.activeTab,
+                      ]}
+                      onPress={() => setPaymentMethod(method as Job['paymentMethod'])}
+                    >
+                      <Text style={paymentMethod === method ? styles.activeTabText : styles.tabText}>
+                        {method}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
 
               {/* Sub-Forms */}
@@ -366,30 +379,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap', // Allow tabs to wrap to the next line if needed
-    justifyContent: 'center', // Center the tabs within the modal
     marginBottom: 15,
   },
-  
-  tab: {
-    paddingVertical: 8,       // Slightly smaller padding
-    paddingHorizontal: 8,   // Adjust horizontal padding to fit content
-    borderRadius: 5,
+  cashTab: {
+    width: '100%', // Full width for the Cash tab
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#f0f0f0',
-    margin: 5,               // Add margin to separate tabs
+    paddingVertical: 10,
+    borderRadius: 5,
+    marginBottom: 10,
   },
-  
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around', // Distribute other tabs evenly
+  },
+  tab: {
+    flex: 1, // Even width for all tabs in the second row
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+  },
   activeTab: {
     backgroundColor: '#007BFF',
   },
-  
   tabText: {
-    fontSize: 14,            // Reduce font size
+    textAlign: 'center',
+    fontSize: 14,
     color: '#333',
   },
-  
   activeTabText: {
+    textAlign: 'center',
     fontSize: 14,
     color: '#fff',
     fontWeight: 'bold',
