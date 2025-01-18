@@ -204,6 +204,7 @@ export default function App() {
               >
                 <Text style={styles.dateText}>{formatDate(date)}</Text>
               </TouchableOpacity>
+
               {showDatePicker && (
                 <DateTimePicker
                   value={date}
@@ -320,6 +321,10 @@ export default function App() {
               item.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
             ]}
           >
+            
+            
+            <Text style={styles.dateText}>{formatDate(new Date(item.date))}</Text>
+
             <Text>{item.companyName}</Text>
             <Text>{item.address}</Text>
             <Text>{item.city}</Text>
