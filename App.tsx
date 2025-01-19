@@ -233,6 +233,45 @@ export default function App() {
     }
   };
 
+  const getWeekEnding = (date: string): string => {
+    const jobDate = new Date(date);
+    const dayOfWeek = jobDate.getDay(); // 0 for Sunday, ..., 6 for Saturday
+    const daysToSaturday = 6 - dayOfWeek; // Days to the next Saturday
+    const saturdayDate = new Date(jobDate);
+    saturdayDate.setDate(jobDate.getDate() + daysToSaturday);
+    return saturdayDate.toLocaleDateString('en-US', {
+      weekday: 'short', // Sat
+      month: 'short',   // Jan
+      day: '2-digit',   // 20
+    });
+  };
+
+  const groupJobsByWeek = (jobs: Job[], sortOrder: 'asc' | 'desc'): { weekEnding: string; jobs: Job[] }[] => {
+  // Sort jobs by date based on the sortOrder
+  const sortedJobs = [...jobs].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+  });
+
+  // Group jobs by their week ending date
+  const groupedJobs: { [key: string]: Job[] } = {};
+  sortedJobs.forEach((job) => {
+    const weekEnding = getWeekEnding(job.date);
+    if (!groupedJobs[weekEnding]) {
+      groupedJobs[weekEnding] = [];
+    }
+    groupedJobs[weekEnding].push(job);
+  });
+
+  return Object.keys(groupedJobs).map((weekEnding) => ({
+    weekEnding,
+    jobs: groupedJobs[weekEnding],
+  }));
+};
+
+  
+
   useEffect(() => {
     loadJobs();
   }, []);
@@ -379,56 +418,70 @@ export default function App() {
 
 
       <FlatList
-        data={sortJobs(jobs, sortOrder)} // Apply sorting before rendering
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.jobCard,
-              item.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
-            ]}
-          >
-            
-            
-            <Text style={styles.dateText}>{formatDate(new Date(item.date))}</Text>
+  data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs
+  keyExtractor={(item, index) => `week-${index}`} // Use week index as key for groups
+  renderItem={({ item }) => (
+    <View>
+      {/* Week Header */}
+      <Text style={styles.weekHeader}>Week ending in {item.weekEnding}</Text>
 
-            <Text>{item.companyName}</Text>
-            <Text>{item.address}</Text>
-            <Text>{item.city}</Text>
-            <Text>{item.yards} yrds</Text>
-            <Text>${item.total.toFixed(2)}</Text>
-            <Text>{item.paymentMethod}</Text>
-            <View style={styles.buttonRow}>
-              <Button title="Edit" onPress={() => {
-                setEditingJobId(item.id);
-                setDate(new Date(item.date));
-                setCompanyName(item.companyName);
-                setAddress(item.address);
-                setCity(item.city);
-                setYards(item.yards.toString());
-                setTotal(item.total.toString());
-                setPaymentMethod(item.paymentMethod);
-                setPaymentStatus(item.paymentStatus);
-                setCheckNumber(item.checkNumber || '');
+      {/* Job Cards for the Week */}
+      {item.jobs.map((job) => (
+        <View
+          key={job.id}
+          style={[
+            styles.jobCard,
+            job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
+          ]}
+        >
+          {/* Job Details */}
+          <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
+          <Text>{job.companyName}</Text>
+          <Text>{job.address}</Text>
+          <Text>{job.city}</Text>
+          <Text>{job.yards} yrds</Text>
+          <Text>${job.total.toFixed(2)}</Text>
+          <Text>{job.paymentMethod}</Text>
+
+          {/* Edit/Delete Buttons */}
+          <View style={styles.buttonRow}>
+            <Button
+              title="Edit"
+              onPress={() => {
+                setEditingJobId(job.id);
+                setDate(new Date(job.date));
+                setCompanyName(job.companyName);
+                setAddress(job.address);
+                setCity(job.city);
+                setYards(job.yards.toString());
+                setTotal(job.total.toString());
+                setPaymentMethod(job.paymentMethod);
+                setPaymentStatus(job.paymentStatus);
+                setCheckNumber(job.checkNumber || '');
                 setBillingInfo(
-                  item.billingInfo
+                  job.billingInfo
                     ? {
-                        companyName: item.billingInfo.companyName || '', // Default to empty string
-                        address: item.billingInfo.address || '',
-                        phone: item.billingInfo.phone || '',
-                        email: item.billingInfo.email || '',
+                        companyName: job.billingInfo.companyName || '',
+                        address: job.billingInfo.address || '',
+                        phone: job.billingInfo.phone || '',
+                        email: job.billingInfo.email || '',
                       }
-                    : { companyName: '', address: '', phone: '', email: '' } // Default object
+                    : { companyName: '', address: '', phone: '', email: '' }
                 );
-                
-                setNotes(item.notes);
+                setNotes(job.notes);
                 openModal();
-              }} />
-              <Button title="Delete" onPress={() => deleteJob(item.id)} color="#FF5C5C" />
-            </View>
+              }}
+            />
+            <Button title="Delete" onPress={() => deleteJob(job.id)} color="#FF5C5C" />
           </View>
-        )}
-      />
+        </View>
+      ))}
+    </View>
+  )}
+/>
+
+
+
     </View>
   );
 }
@@ -550,4 +603,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
+
+  weekHeader: {
+    marginTop: 20,
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  }
+  
 });
+
+
+
