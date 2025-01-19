@@ -139,7 +139,6 @@ export default function App() {
     closeModal(); // Close the modal and reset the form
   };
   
-
   const deleteJob = (id: string) => {
     const updatedJobs = jobs.filter((job) => job.id !== id); // Remove the job with the given ID
     setJobs(updatedJobs); // Update the state
@@ -185,7 +184,10 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.title}>Job Tracker</Text>
 
-      <Button title="Add Job" onPress={openModal} />
+      <TouchableOpacity style={styles.addButton} onPress={openModal}>
+        <Text style={styles.addButtonText}>+</Text>
+      </TouchableOpacity>
+
 
       {/* Modal */}
       <Modal
@@ -437,5 +439,28 @@ const styles = StyleSheet.create({
 
   switchContainer: {
 
-  }
+  },
+
+  addButton: {
+    position: 'absolute',      // Float the button
+    bottom: 20,                // Distance from the bottom of the screen
+    alignSelf: 'center',       // Center horizontally
+    backgroundColor: 'rgb(0, 0, 255)', // Semi-transparent blue
+    width: 60,                 // Circular dimensions
+    height: 60,
+    borderRadius: 30,          // Half of width/height for a circle
+    justifyContent: 'center',  // Center content inside the button
+    alignItems: 'center',
+    elevation: 5,              // Add shadow for a floating effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    zIndex: 100, // Bring button to the top
+  },
+  addButtonText: {
+    fontSize: 28,              // Large plus symbol
+    color: '#fff',             // White text color
+    fontWeight: 'bold',
+  },
 });
