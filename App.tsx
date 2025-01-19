@@ -54,6 +54,55 @@ export default function App() {
   const [notes, setNotes] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
 
+  
+  // Function to generate dummy jobs
+  const generateDummyJobs = (): Job[] => {
+    const dummyJobs: Job[] = [];
+    const paymentMethods: Job['paymentMethod'][] = ['Cash', 'Check', 'Zelle', 'Charge', 'Square'];
+    const paymentStatuses: Job['paymentStatus'][] = ['Paid', 'Unpaid'];
+    const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
+    const companyNames = ['Acme Concrete', 'BuildSmart', 'ConcretePro', 'Solid Foundations', 'Urban Builders'];
+  
+    for (let i = 0; i < 14; i++) {
+      const randomDate = new Date();
+      randomDate.setDate(randomDate.getDate() + i);
+  
+      const randomPaymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+      const randomPaymentStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
+      const randomCity = cities[Math.floor(Math.random() * cities.length)];
+      const randomCompanyName = companyNames[Math.floor(Math.random() * companyNames.length)];
+  
+      const dummyJob: Job = {
+        id: uuid.v4() as string,
+        date: randomDate.toISOString().split('T')[0], // Save date as YYYY-MM-DD
+        companyName: randomCompanyName,
+        address: `123 Main St, ${randomCity}`,
+        city: randomCity,
+        yards: Math.floor(Math.random() * 10) + 1, // Random yards between 1 and 10
+        total: Math.floor(Math.random() * 5000) + 500, // Random total between $500 and $5500
+        paymentMethod: randomPaymentMethod,
+        paymentStatus: randomPaymentStatus,
+        checkNumber: randomPaymentMethod === 'Check' ? `${Math.floor(Math.random() * 100000)}` : undefined,
+        billingInfo: randomPaymentMethod === 'Charge'
+          ? { companyName: randomCompanyName, address: `456 Elm St, ${randomCity}`, phone: '555-1234', email: 'info@company.com' }
+          : null,
+        notes: 'Test job generated for testing purposes.',
+      };
+  
+      dummyJobs.push(dummyJob);
+    }
+  
+    return dummyJobs;
+  };
+  
+  // Hook to load dummy data into the app
+  useEffect(() => {
+    const dummyData = generateDummyJobs();
+    setJobs(dummyData);
+    saveJobs(dummyData);
+  }, []);
+  
+
   const saveJobs = async (jobsToSave: Job[]) => {
     try {
       await AsyncStorage.setItem('jobs', JSON.stringify(jobsToSave));
@@ -182,7 +231,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Job Tracker</Text>
+      <Text style={styles.title}>Pump Hub</Text>
 
       <TouchableOpacity style={styles.addButton} onPress={openModal}>
         <Text style={styles.addButtonText}>+</Text>
@@ -370,7 +419,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, marginTop: 20, textAlign: 'center' },
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
   modalContent: { width: '90%', backgroundColor: 'white', padding: 20, borderRadius: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 5 },
   modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
