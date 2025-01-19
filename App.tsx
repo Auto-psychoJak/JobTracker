@@ -430,69 +430,43 @@ export default function App() {
 
 
       <FlatList
-      data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs
-      keyExtractor={(item, index) => `week-${index}`} // Use week index as key for groups
-      renderItem={({ item }) => (
-        <View>
-          {/* Week Header with Total */}
-            <Text style={styles.weekHeader}>
-              Week ending in {item.weekEnding} - Total: ${item.total.toFixed(2)}
-            </Text>
+        data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs
+        keyExtractor={(item, index) => `week-${index}`}
+        renderItem={({ item }) => (
+          <View>
+      {/* Week Header */}
+      <Text style={styles.weekHeader}>
+        Week ending in {item.weekEnding} - Total: ${item.total.toFixed(2)}
+      </Text>
 
-          {/* Job Cards for the Week */}
-          {item.jobs.map((job) => (
-        <View
-          key={job.id}
-          style={[
-            styles.jobCard,
-            job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
-          ]}
-        >
-          {/* Job Details */}
-          <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
-          <Text>{job.companyName}</Text>
-          <Text>{job.address}</Text>
-          <Text>{job.city}</Text>
-          <Text>{job.yards} yrds</Text>
-          <Text>${job.total.toFixed(2)}</Text>
-          <Text>{job.paymentMethod}</Text>
-
-          {/* Edit/Delete Buttons */}
-          <View style={styles.buttonRow}>
-            <Button
-              title="Edit"
-              onPress={() => {
-                setEditingJobId(job.id);
-                setDate(new Date(job.date));
-                setCompanyName(job.companyName);
-                setAddress(job.address);
-                setCity(job.city);
-                setYards(job.yards.toString());
-                setTotal(job.total.toString());
-                setPaymentMethod(job.paymentMethod);
-                setPaymentStatus(job.paymentStatus);
-                setCheckNumber(job.checkNumber || '');
-                setBillingInfo(
-                  job.billingInfo
-                    ? {
-                        companyName: job.billingInfo.companyName || '',
-                        address: job.billingInfo.address || '',
-                        phone: job.billingInfo.phone || '',
-                        email: job.billingInfo.email || '',
-                      }
-                    : { companyName: '', address: '', phone: '', email: '' }
-                );
-                setNotes(job.notes);
-                openModal();
-              }}
-            />
-            <Button title="Delete" onPress={() => deleteJob(job.id)} color="#FF5C5C" />
+      {/* Job Cards for the Week */}
+      {item.jobs.map((job, idx) => (
+        <View key={job.id}>
+          <View
+            style={[
+              styles.jobCard,
+              job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
+            ]}
+          >
+            <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
+            <Text>{job.companyName}</Text>
+            <Text>{job.address}</Text>
+            <Text>{job.city}</Text>
+            <Text>{job.yards} yrds</Text>
+            <Text>${job.total.toFixed(2)}</Text>
+            <Text>{job.paymentMethod}</Text>
           </View>
+
+          {/* Horizontal Line After Saturday, Outside the Job Card */}
+          {(new Date(job.date).getDay() === 6 || idx === item.jobs.length - 1) && (
+            <View style={styles.horizontalLineOutside} />
+          )}
         </View>
       ))}
     </View>
   )}
 />
+
 
 
 
@@ -624,6 +598,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+  horizontalLineOutside: {
+    height: 2, // Slightly thicker line for visibility
+    backgroundColor: '#007BFF', // Blue line for emphasis
+    marginVertical: 15, // Space around the line
+    marginHorizontal: 10, // Align with job cards
   },
   monthlyTotal: {
     fontSize: 18,
