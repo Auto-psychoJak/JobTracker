@@ -371,13 +371,12 @@ export default function App() {
 
       {/* Job List */}
       <TouchableOpacity
-        style={styles.sortButton}
+        style={styles.sortIcon}
         onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
       >
-        <Text style={styles.sortButtonText}>
-          Sort: {sortOrder === 'asc' ? 'Oldest to Newest' : 'Newest to Oldest'}
-        </Text>
+        <Text style={styles.sortIconText}>{sortOrder === 'asc' ? '↑' : '↓'}</Text>
       </TouchableOpacity>
+
 
       <FlatList
         data={sortJobs(jobs, sortOrder)} // Apply sorting before rendering
@@ -530,16 +529,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  sortButton: {
-    padding: 10,
+  sortIcon: {
+    position: 'absolute',
+    top: 45,                // Distance from the top
+    right: 10,              // Distance from the right edge
     backgroundColor: '#007BFF',
-    borderRadius: 5,
+    borderRadius: 20,       // Circular shape
+    width: 40,              // Icon size
+    height: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
+    elevation: 5,           // Add shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
   },
-  sortButtonText: {
-    color: 'white',
-    fontSize: 16,
+  sortIconText: {
+    color: '#fff',
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });
