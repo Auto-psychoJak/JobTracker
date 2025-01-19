@@ -53,7 +53,15 @@ export default function App() {
   const [billingInfo, setBillingInfo] = useState({ companyName: '', address: '', phone: '', email: '' });
   const [notes, setNotes] = useState('');
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
-
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc'); // Default to oldest to newest
+  const sortJobs = (jobs: Job[], order: 'asc' | 'desc') => {
+    return [...jobs].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return order === 'asc' ? dateA - dateB : dateB - dateA; // Ascending or descending
+    });
+  };
+  
   
   // Function to generate dummy jobs
   const generateDummyJobs = (): Job[] => {
@@ -362,8 +370,17 @@ export default function App() {
       </Modal>
 
       {/* Job List */}
+      <TouchableOpacity
+        style={styles.sortButton}
+        onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+      >
+        <Text style={styles.sortButtonText}>
+          Sort: {sortOrder === 'asc' ? 'Oldest to Newest' : 'Newest to Oldest'}
+        </Text>
+      </TouchableOpacity>
+
       <FlatList
-        data={jobs}
+        data={sortJobs(jobs, sortOrder)} // Apply sorting before rendering
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View
@@ -510,6 +527,19 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 28,              // Large plus symbol
     color: '#fff',             // White text color
+    fontWeight: 'bold',
+  },
+
+  sortButton: {
+    padding: 10,
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sortButtonText: {
+    color: 'white',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });
