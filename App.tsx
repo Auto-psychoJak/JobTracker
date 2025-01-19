@@ -246,30 +246,42 @@ export default function App() {
     });
   };
 
-  const groupJobsByWeek = (jobs: Job[], sortOrder: 'asc' | 'desc'): { weekEnding: string; jobs: Job[] }[] => {
-  // Sort jobs by date based on the sortOrder
-  const sortedJobs = [...jobs].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-  });
-
-  // Group jobs by their week ending date
-  const groupedJobs: { [key: string]: Job[] } = {};
-  sortedJobs.forEach((job) => {
-    const weekEnding = getWeekEnding(job.date);
-    if (!groupedJobs[weekEnding]) {
-      groupedJobs[weekEnding] = [];
-    }
-    groupedJobs[weekEnding].push(job);
-  });
-
-  return Object.keys(groupedJobs).map((weekEnding) => ({
-    weekEnding,
-    jobs: groupedJobs[weekEnding],
-  }));
-};
-
+  const groupJobsByWeek = (jobs: Job[], sortOrder: 'asc' | 'desc'): { weekEnding: string; jobs: Job[]; total: number }[] => {
+    const sortedJobs = [...jobs].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  
+    const groupedJobs: { [key: string]: { jobs: Job[]; total: number } } = {};
+  
+    sortedJobs.forEach((job) => {
+      const weekEnding = getWeekEnding(job.date);
+      if (!groupedJobs[weekEnding]) {
+        groupedJobs[weekEnding] = { jobs: [], total: 0 };
+      }
+      groupedJobs[weekEnding].jobs.push(job);
+      groupedJobs[weekEnding].total += job.total; // Add to the weekly total
+    });
+  
+    return Object.keys(groupedJobs).map((weekEnding) => ({
+      weekEnding,
+      jobs: groupedJobs[weekEnding].jobs,
+      total: groupedJobs[weekEnding].total, // Include the total
+    }));
+  };
+  
+  const calculateMonthlyTotal = (jobs: Job[]): number => {
+    const currentMonth = new Date().getMonth(); // Get the current month (0-based)
+    const currentYear = new Date().getFullYear();
+    return jobs
+      .filter((job) => {
+        const jobDate = new Date(job.date);
+        return jobDate.getMonth() === currentMonth && jobDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, job) => sum + job.total, 0); // Sum the totals
+  };
+  
   
 
   useEffect(() => {
@@ -418,15 +430,17 @@ export default function App() {
 
 
       <FlatList
-  data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs
-  keyExtractor={(item, index) => `week-${index}`} // Use week index as key for groups
-  renderItem={({ item }) => (
-    <View>
-      {/* Week Header */}
-      <Text style={styles.weekHeader}>Week ending in {item.weekEnding}</Text>
+      data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs
+      keyExtractor={(item, index) => `week-${index}`} // Use week index as key for groups
+      renderItem={({ item }) => (
+        <View>
+          {/* Week Header with Total */}
+            <Text style={styles.weekHeader}>
+              Week ending in {item.weekEnding} - Total: ${item.total.toFixed(2)}
+            </Text>
 
-      {/* Job Cards for the Week */}
-      {item.jobs.map((job) => (
+          {/* Job Cards for the Week */}
+          {item.jobs.map((job) => (
         <View
           key={job.id}
           style={[
@@ -610,7 +624,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-  }
+  },
+  monthlyTotal: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginVertical: 20,
+    color: '#007BFF',
+  },
   
 });
 
