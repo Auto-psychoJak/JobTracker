@@ -16,6 +16,14 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import uuid from 'react-native-uuid';
+import MainNavigator from './MainNavigator'; // Replace './App' with the new navigator
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList, WeeklySummary  } from './types'; 
+
+
+
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 type Job = {
   id: string;
@@ -60,6 +68,18 @@ export default function App() {
       const dateB = new Date(b.date).getTime();
       return order === 'asc' ? dateA - dateB : dateB - dateA; // Ascending or descending
     });
+  };
+
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+
+  const calculateWeeklyData = (jobs: Job[]): WeeklySummary[] => {
+    const groupedData = groupJobsByWeek(jobs, 'asc'); // Group jobs by week in ascending order
+    return groupedData.map((group) => ({
+      weekEnding: group.weekEnding,
+      totalJobs: group.jobs.length,
+      totalEarned: group.jobs.reduce((sum, job) => sum + job.total, 0),
+      unpaidJobs: group.jobs.filter((job) => job.paymentStatus === 'Unpaid').length,
+    }));
   };
   
   
@@ -281,16 +301,27 @@ export default function App() {
       })
       .reduce((sum, job) => sum + job.total, 0); // Sum the totals
   };
-  
-  
+
 
   useEffect(() => {
     loadJobs();
   }, []);
 
   return (
+    
     <View style={styles.container}>
       <Text style={styles.title}>Pump Hub</Text>
+      {/* Navigate to Weekly Summary Screen */}
+      
+      {/* Navigate to Weekly Summary Screen */}
+      <TouchableOpacity
+        style={styles.summaryButton}
+        onPress={() =>
+          navigation.navigate('WeeklySummary', { weeklyData: calculateWeeklyData(jobs) })
+        }
+      >
+        <Text style={styles.summaryButtonText}>View Weekly Summary</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.addButton} onPress={openModal}>
         <Text style={styles.addButtonText}>+</Text>
@@ -611,6 +642,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 20,
     color: '#007BFF',
+  },
+  summaryButton: {
+    padding: 10,
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  summaryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   
 });
