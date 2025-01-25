@@ -84,51 +84,51 @@ export default function App() {
   
   
   // Function to generate dummy jobs
-  const generateDummyJobs = (): Job[] => {
-    const dummyJobs: Job[] = [];
-    const paymentMethods: Job['paymentMethod'][] = ['Cash', 'Check', 'Zelle', 'Charge', 'Square'];
-    const paymentStatuses: Job['paymentStatus'][] = ['Paid', 'Unpaid'];
-    const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
-    const companyNames = ['Acme Concrete', 'BuildSmart', 'ConcretePro', 'Solid Foundations', 'Urban Builders'];
+  // const generateDummyJobs = (): Job[] => {
+  //   const dummyJobs: Job[] = [];
+  //   const paymentMethods: Job['paymentMethod'][] = ['Cash', 'Check', 'Zelle', 'Charge', 'Square'];
+  //   const paymentStatuses: Job['paymentStatus'][] = ['Paid', 'Unpaid'];
+  //   const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
+  //   const companyNames = ['Acme Concrete', 'BuildSmart', 'ConcretePro', 'Solid Foundations', 'Urban Builders'];
   
-    for (let i = 0; i < 14; i++) {
-      const randomDate = new Date();
-      randomDate.setDate(randomDate.getDate() + i);
+  //   for (let i = 0; i < 14; i++) {
+  //     const randomDate = new Date();
+  //     randomDate.setDate(randomDate.getDate() + i);
   
-      const randomPaymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
-      const randomPaymentStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
-      const randomCity = cities[Math.floor(Math.random() * cities.length)];
-      const randomCompanyName = companyNames[Math.floor(Math.random() * companyNames.length)];
+  //     const randomPaymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+  //     const randomPaymentStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
+  //     const randomCity = cities[Math.floor(Math.random() * cities.length)];
+  //     const randomCompanyName = companyNames[Math.floor(Math.random() * companyNames.length)];
   
-      const dummyJob: Job = {
-        id: uuid.v4() as string,
-        date: randomDate.toISOString().split('T')[0], // Save date as YYYY-MM-DD
-        companyName: randomCompanyName,
-        address: `123 Main St, ${randomCity}`,
-        city: randomCity,
-        yards: Math.floor(Math.random() * 10) + 1, // Random yards between 1 and 10
-        total: Math.floor(Math.random() * 5000) + 500, // Random total between $500 and $5500
-        paymentMethod: randomPaymentMethod,
-        paymentStatus: randomPaymentStatus,
-        checkNumber: randomPaymentMethod === 'Check' ? `${Math.floor(Math.random() * 100000)}` : undefined,
-        billingInfo: randomPaymentMethod === 'Charge'
-          ? { companyName: randomCompanyName, address: `456 Elm St, ${randomCity}`, phone: '555-1234', email: 'info@company.com' }
-          : null,
-        notes: 'Test job generated for testing purposes.',
-      };
+  //     const dummyJob: Job = {
+  //       id: uuid.v4() as string,
+  //       date: randomDate.toISOString().split('T')[0], // Save date as YYYY-MM-DD
+  //       companyName: randomCompanyName,
+  //       address: `123 Main St, ${randomCity}`,
+  //       city: randomCity,
+  //       yards: Math.floor(Math.random() * 10) + 1, // Random yards between 1 and 10
+  //       total: Math.floor(Math.random() * 5000) + 500, // Random total between $500 and $5500
+  //       paymentMethod: randomPaymentMethod,
+  //       paymentStatus: randomPaymentStatus,
+  //       checkNumber: randomPaymentMethod === 'Check' ? `${Math.floor(Math.random() * 100000)}` : undefined,
+  //       billingInfo: randomPaymentMethod === 'Charge'
+  //         ? { companyName: randomCompanyName, address: `456 Elm St, ${randomCity}`, phone: '555-1234', email: 'info@company.com' }
+  //         : null,
+  //       notes: 'Test job generated for testing purposes.',
+  //     };
   
-      dummyJobs.push(dummyJob);
-    }
+  //     dummyJobs.push(dummyJob);
+  //   }
   
-    return dummyJobs;
-  };
+  //   return dummyJobs;
+  // };
   
-  // Hook to load dummy data into the app
-  useEffect(() => {
-    const dummyData = generateDummyJobs();
-    setJobs(dummyData);
-    saveJobs(dummyData);
-  }, []);
+  // // Hook to load dummy data into the app
+  // useEffect(() => {
+  //   const dummyData = generateDummyJobs();
+  //   setJobs(dummyData);
+  //   saveJobs(dummyData);
+  // }, []);
   
 
   const saveJobs = async (jobsToSave: Job[]) => {
@@ -360,7 +360,7 @@ export default function App() {
               <TextInput style={styles.input} placeholder="Yards (e.g., 3)" value={yards} keyboardType="numeric" onChangeText={(text) => setYards(text.replace(/[^0-9.]/g, ''))} />
               <TextInput style={styles.input} placeholder="Total Amount" value={total} keyboardType="numeric" onChangeText={(text) => setTotal(text.replace(/[^0-9.]/g, ''))} />
               <View style={styles.switchContainer}>
-                <Text>Payment Status: {paymentStatus}</Text>
+                <Text>{paymentStatus}</Text>
                 <Switch
                   value={paymentStatus === 'Paid'}
                   onValueChange={(value) => setPaymentStatus(value ? 'Paid' : 'Unpaid')}
@@ -461,45 +461,79 @@ export default function App() {
 
 
       <FlatList
-        data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs
-        keyExtractor={(item, index) => `week-${index}`}
-        renderItem={({ item }) => (
-          <View>
+  data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs by week
+  keyExtractor={(item, index) => `week-${index}`} // Unique key for each week
+  renderItem={({ item }) => (
+    <View>
+
+      {/* Horizontal Line */}
+      <View style={styles.horizontalLine} />
+
       {/* Week Header */}
       <Text style={styles.weekHeader}>
-        Week ending in {item.weekEnding} - Total: ${item.total.toFixed(2)}
+        Week ending in {item.weekEnding} - ${item.total.toFixed(2)}
       </Text>
 
-      {/* Job Cards for the Week */}
-      {item.jobs.map((job, idx) => (
-        <View key={job.id}>
-          <View
-            style={[
-              styles.jobCard,
-              job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
-            ]}
-          >
-            <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
-            <Text>{job.companyName}</Text>
-            <Text>{job.address}</Text>
-            <Text>{job.city}</Text>
-            <Text>{job.yards} yrds</Text>
-            <Text>${job.total.toFixed(2)}</Text>
-            <Text>{job.paymentMethod}</Text>
-          </View>
+  
 
-          {/* Horizontal Line After Saturday, Outside the Job Card */}
-          {(new Date(job.date).getDay() === 6 || idx === item.jobs.length - 1) && (
-            <View style={styles.horizontalLineOutside} />
-          )}
+      {/* Job Cards for the Week */}
+      {item.jobs.map((job) => (
+        <View
+          key={job.id}
+          style={[
+            styles.jobCard,
+            job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
+          ]}
+        >
+          {/* Job Details */}
+          <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
+          <Text>{job.companyName}</Text>
+          <Text>{job.address}</Text>
+          <Text>{job.city}</Text>
+          <Text>{job.yards}</Text>
+          <Text>${job.total.toFixed(2)}</Text>
+          <Text>{job.paymentMethod}</Text>
+
+          {/* Buttons Row */}
+          <View style={styles.buttonRow}>
+            <Button
+              title="Edit"
+              onPress={() => {
+                setEditingJobId(job.id); // Set the job ID for editing
+                setDate(new Date(job.date));
+                setCompanyName(job.companyName);
+                setAddress(job.address);
+                setCity(job.city);
+                setYards(job.yards.toString());
+                setTotal(job.total.toString());
+                setPaymentMethod(job.paymentMethod);
+                setPaymentStatus(job.paymentStatus);
+                setCheckNumber(job.checkNumber || '');
+                setBillingInfo(
+                  job.billingInfo
+                    ? {
+                        companyName: job.billingInfo.companyName || '',
+                        address: job.billingInfo.address || '',
+                        phone: job.billingInfo.phone || '',
+                        email: job.billingInfo.email || '',
+                      }
+                    : { companyName: '', address: '', phone: '', email: '' }
+                );
+                setNotes(job.notes);
+                openModal(); // Open the modal for editing
+              }}
+            />
+            <Button
+              title="Delete"
+              onPress={() => deleteJob(job.id)} // Delete the job
+              color="#FF5C5C"
+            />
+          </View>
         </View>
       ))}
     </View>
   )}
 />
-
-
-
 
     </View>
   );
@@ -630,7 +664,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  horizontalLineOutside: {
+  horizontalLine: {
     height: 2, // Slightly thicker line for visibility
     backgroundColor: '#007BFF', // Blue line for emphasis
     marginVertical: 15, // Space around the line
