@@ -240,7 +240,12 @@ export default function App() {
     setBillingInfo({ companyName: '', address: '', phone: '', email: '' });
     setNotes('');
   };
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
+  const toggleCardExpansion = (id: string) => {
+    setExpandedCardId((prev) => (prev === id ? null : id)); // Expand or collapse the card
+  };
+  
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
@@ -465,75 +470,82 @@ export default function App() {
   keyExtractor={(item, index) => `week-${index}`} // Unique key for each week
   renderItem={({ item }) => (
     <View>
+      {/* Week Header */}
+      <Text style={styles.weekHeader}>
+        Week ending in {item.weekEnding} - Total: ${item.total.toFixed(2)}
+      </Text>
 
       {/* Horizontal Line */}
       <View style={styles.horizontalLine} />
 
-      {/* Week Header */}
-      <Text style={styles.weekHeader}>
-        Week ending in {item.weekEnding} - ${item.total.toFixed(2)}
-      </Text>
-
-  
-
       {/* Job Cards for the Week */}
       {item.jobs.map((job) => (
-        <View
+        <TouchableOpacity
           key={job.id}
+          onPress={() => toggleCardExpansion(job.id)} // Toggle expansion
           style={[
             styles.jobCard,
             job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
           ]}
         >
-          {/* Job Details */}
+          {/* Always Visible Summary */}
           <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
-          <Text>{job.companyName}</Text>
-          <Text>{job.address}</Text>
-          <Text>{job.city}</Text>
-          <Text>{job.yards}</Text>
-          <Text>${job.total.toFixed(2)}</Text>
-          <Text>{job.paymentMethod}</Text>
+          <Text>Company: {job.companyName}</Text>
+          <Text>Total: ${job.total.toFixed(2)}</Text>
 
-          {/* Buttons Row */}
-          <View style={styles.buttonRow}>
-            <Button
-              title="Edit"
-              onPress={() => {
-                setEditingJobId(job.id); // Set the job ID for editing
-                setDate(new Date(job.date));
-                setCompanyName(job.companyName);
-                setAddress(job.address);
-                setCity(job.city);
-                setYards(job.yards.toString());
-                setTotal(job.total.toString());
-                setPaymentMethod(job.paymentMethod);
-                setPaymentStatus(job.paymentStatus);
-                setCheckNumber(job.checkNumber || '');
-                setBillingInfo(
-                  job.billingInfo
-                    ? {
-                        companyName: job.billingInfo.companyName || '',
-                        address: job.billingInfo.address || '',
-                        phone: job.billingInfo.phone || '',
-                        email: job.billingInfo.email || '',
-                      }
-                    : { companyName: '', address: '', phone: '', email: '' }
-                );
-                setNotes(job.notes);
-                openModal(); // Open the modal for editing
-              }}
-            />
-            <Button
-              title="Delete"
-              onPress={() => deleteJob(job.id)} // Delete the job
-              color="#FF5C5C"
-            />
-          </View>
-        </View>
+          {/* Expanded Details */}
+          {expandedCardId === job.id && (
+            <View>
+              <Text>Address: {job.address}</Text>
+              <Text>City: {job.city}</Text>
+              <Text>Yards: {job.yards}</Text>
+              <Text>Payment Method: {job.paymentMethod}</Text>
+              <Text>Payment Status: {job.paymentStatus}</Text>
+              {job.notes && <Text>Notes: {job.notes}</Text>}
+
+              {/* Edit/Delete Buttons */}
+              <View style={styles.buttonRow}>
+                <Button
+                  title="Edit"
+                  onPress={() => {
+                    setEditingJobId(job.id); // Set the job ID for editing
+                    setDate(new Date(job.date));
+                    setCompanyName(job.companyName);
+                    setAddress(job.address);
+                    setCity(job.city);
+                    setYards(job.yards.toString());
+                    setTotal(job.total.toString());
+                    setPaymentMethod(job.paymentMethod);
+                    setPaymentStatus(job.paymentStatus);
+                    setCheckNumber(job.checkNumber || '');
+                    setBillingInfo(
+                      job.billingInfo
+                        ? {
+                            companyName: job.billingInfo.companyName || '',
+                            address: job.billingInfo.address || '',
+                            phone: job.billingInfo.phone || '',
+                            email: job.billingInfo.email || '',
+                          }
+                        : { companyName: '', address: '', phone: '', email: '' }
+                    );
+                    setNotes(job.notes);
+                    openModal(); // Open the modal for editing
+                  }}
+                />
+                <Button
+                  title="Delete"
+                  onPress={() => deleteJob(job.id)} // Delete the job
+                  color="#FF5C5C"
+                />
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
       ))}
     </View>
   )}
 />
+
 
     </View>
   );
