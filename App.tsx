@@ -271,30 +271,42 @@ export default function App() {
     });
   };
 
-  const groupJobsByWeek = (jobs: Job[], sortOrder: 'asc' | 'desc'): { weekEnding: string; jobs: Job[]; total: number }[] => {
-    const sortedJobs = [...jobs].sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    });
-  
-    const groupedJobs: { [key: string]: { jobs: Job[]; total: number } } = {};
+  const groupJobsByWeek = (
+    jobs: Job[],
+    sortOrder: 'asc' | 'desc'
+  ): { weekEnding: string; jobs: Job[]; total: number; cashJobsTotal: number; realAmount: number }[] => {
+    const sortedJobs = [...jobs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const groupedJobs: { [key: string]: { jobs: Job[]; total: number; cashJobsTotal: number } } = {};
   
     sortedJobs.forEach((job) => {
-      const weekEnding = getWeekEnding(job.date);
+      const weekEnding = getWeekEnding(job.date); // Get the week-ending date
       if (!groupedJobs[weekEnding]) {
-        groupedJobs[weekEnding] = { jobs: [], total: 0 };
+        groupedJobs[weekEnding] = { jobs: [], total: 0, cashJobsTotal: 0 };
       }
       groupedJobs[weekEnding].jobs.push(job);
-      groupedJobs[weekEnding].total += job.total; // Add to the weekly total
+      groupedJobs[weekEnding].total += job.total; // Add to weekly total
+      if (job.paymentMethod === 'Cash') {
+        groupedJobs[weekEnding].cashJobsTotal += job.total; // Add to cash total
+      }
     });
   
-    return Object.keys(groupedJobs).map((weekEnding) => ({
-      weekEnding,
-      jobs: groupedJobs[weekEnding].jobs,
-      total: groupedJobs[weekEnding].total, // Include the total
-    }));
+    return Object.keys(groupedJobs).map((weekEnding) => {
+      const total = groupedJobs[weekEnding].total;
+      const cashJobsTotal = groupedJobs[weekEnding].cashJobsTotal;
+      const realAmount = total / 2 - cashJobsTotal; // Subtract cash jobs total from commission
+  
+      return {
+        weekEnding,
+        jobs: groupedJobs[weekEnding].jobs,
+        total,
+        cashJobsTotal,
+        realAmount, // Final amount after subtraction
+      };
+    });
   };
+  
+  
+  
   
   const calculateMonthlyTotal = (jobs: Job[]): number => {
     const currentMonth = new Date().getMonth(); // Get the current month (0-based)
@@ -306,7 +318,7 @@ export default function App() {
       })
       .reduce((sum, job) => sum + job.total, 0); // Sum the totals
   };
-
+  
 
   useEffect(() => {
     loadJobs();
@@ -472,7 +484,8 @@ export default function App() {
     <View>
       {/* Week Header */}
       <Text style={styles.weekHeader}>
-        Week ending in {item.weekEnding} - Total: ${item.total.toFixed(2)}
+        
+        {item.weekEnding}, ${(item.total/2).toFixed(2)} - ${item.cashJobsTotal} = ${item.realAmount.toFixed(2)} 
       </Text>
 
       {/* Horizontal Line */}
@@ -490,17 +503,16 @@ export default function App() {
         >
           {/* Always Visible Summary */}
           <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
-          <Text>Company: {job.companyName}</Text>
-          <Text>Total: ${job.total.toFixed(2)}</Text>
+          <Text>{job.companyName}</Text>
+          <Text>${job.total.toFixed(2)}</Text>
 
           {/* Expanded Details */}
           {expandedCardId === job.id && (
             <View>
-              <Text>Address: {job.address}</Text>
-              <Text>City: {job.city}</Text>
-              <Text>Yards: {job.yards}</Text>
-              <Text>Payment Method: {job.paymentMethod}</Text>
-              <Text>Payment Status: {job.paymentStatus}</Text>
+              <Text>{job.address}</Text>
+              <Text>{job.city}</Text>
+              <Text> {job.yards}</Text>
+              <Text> {job.paymentMethod}</Text>
               {job.notes && <Text>Notes: {job.notes}</Text>}
 
               {/* Edit/Delete Buttons */}
