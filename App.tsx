@@ -156,11 +156,12 @@ export default function App() {
 
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {
-      weekday: 'short', // Mon
-      month: 'short',   // Jan
-      day: '2-digit',   // 16
+      weekday: 'short',
+      month: 'short',
+      day: '2-digit',
     });
   };
+
 
   const addJob = () => {
     if (!address || !city || !yards || !paymentMethod || !total) {
@@ -247,16 +248,54 @@ export default function App() {
   };
   
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
     if (selectedDate) {
-      const localDate = new Date(
+      // Ensure the date is correctly set without timezone issues
+      const adjustedDate = new Date(
         selectedDate.getFullYear(),
         selectedDate.getMonth(),
-        selectedDate.getDate()
+        selectedDate.getDate() + 1 //fixed miss match dates
       );
-      setDate(localDate);
+      setDate(adjustedDate); // Store the corrected date
+      setShowDatePicker(false); // Ensures picker does not reopen
     }
   };
+
+  const saveDate = (date: Date): string => {
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    return utcDate.toISOString().split('T')[0]; // Store as "YYYY-MM-DD"
+  };
+  
+  const storeJobs = async (jobs: Job[]) => {
+    try {
+      const jsonValue = JSON.stringify(jobs);
+      await AsyncStorage.setItem('jobs', jsonValue);
+    } catch (error) {
+      console.error('Error saving jobs:', error);
+    }
+  };
+
+  const saveJob = () => {
+    const newJob: Job = {
+      id: uuid.v4() as string,
+      date: saveDate(date), // Ensure correct date storage
+      companyName,
+      address,
+      city,
+      yards: parseFloat(yards),
+      total: parseFloat(total),
+      paymentMethod,
+      paymentStatus,
+      checkNumber: paymentMethod === "Check" ? checkNumber : undefined,
+      billingInfo: paymentMethod === "Charge" ? billingInfo : null,
+      notes,
+    };
+  
+    const updatedJobs = [...jobs, newJob];
+  
+    setJobs(updatedJobs); // Update the state
+    storeJobs(updatedJobs); // Save to AsyncStorage
+  };
+  
 
   const getWeekEnding = (date: string): string => {
     const jobDate = new Date(date);
