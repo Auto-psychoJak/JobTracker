@@ -559,7 +559,7 @@ export default function App() {
                 <View>
                   <Text>{job.address}</Text>
                   <Text>{job.city}</Text>
-                  <Text> {job.yards}</Text>
+                  <Text> {job.yards} yrds</Text>
                   
                   {job.notes && <Text>Notes: {job.notes}</Text>}
 
