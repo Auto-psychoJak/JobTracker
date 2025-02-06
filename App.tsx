@@ -541,14 +541,18 @@ export default function App() {
               ]}
             >
               {/* Always Visible Summary */}
-              <View style={styles.cardHeader}>
-                <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
-                <View style={styles.paymentContainer}>
-                  <Text style={styles.paymentText}> {job.paymentMethod}</Text>
-                  <Text style={styles.totalText}>${job.total.toFixed(2)}</Text>
-                </View>
+             
+             <View style={styles.row}>
+              <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
+              <Text style={styles.paymentText}> {job.paymentMethod}</Text>
+             </View>
+              
+
+              {/* Row 2: Company Name & Total Amount */}
+              <View style={styles.row}>
+                <Text style={styles.companyText} >{job.companyName}</Text>
+                <Text style={styles.totalText}>${job.total.toFixed(2)}</Text>
               </View>
-              <Text style={styles.companyText} >{job.companyName}</Text>
 
               {/* Expanded Details */}
               {expandedCardId === job.id && (
@@ -672,6 +676,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 3,
   },
+  row: {
+    flexDirection: 'row', // Make elements align horizontally
+    justifyContent: 'space-between', // Push elements to opposite ends
+    alignItems: 'center',
+    marginBottom: 5,
+  },
   cardHeader: {
     flexDirection: 'row', // Arrange Date & Payment Type in a row
     justifyContent: 'space-between', // Push them to opposite sides
@@ -690,6 +700,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
+    marginTop: 5,
   },
   companyText: {
     fontSize: 16,
