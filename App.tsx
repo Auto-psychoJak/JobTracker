@@ -517,83 +517,88 @@ export default function App() {
 
 
       <FlatList
-  data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs by week
-  keyExtractor={(item, index) => `week-${index}`} // Unique key for each week
-  renderItem={({ item }) => (
-    <View>
-      {/* Week Header */}
-      <Text style={styles.weekHeader}>
-        
-        {item.weekEnding}, ${(item.total/2).toFixed(2)} - ${item.cashJobsTotal} = ${item.realAmount.toFixed(2)} 
-      </Text>
+        data={groupJobsByWeek(jobs, sortOrder)} // Group and sort jobs by week
+        keyExtractor={(item, index) => `week-${index}`} // Unique key for each week
+        renderItem={({ item }) => (
+        <View>
+          {/* Week Header */}
+          <Text style={styles.weekHeader}>
+            
+            {item.weekEnding}, ${(item.total/2).toFixed(2)} - ${item.cashJobsTotal} = ${item.realAmount.toFixed(2)} 
+          </Text>
 
-      {/* Horizontal Line */}
-      <View style={styles.horizontalLine} />
+          {/* Horizontal Line */}
+          <View style={styles.horizontalLine} />
 
-      {/* Job Cards for the Week */}
-      {item.jobs.map((job) => (
-        <TouchableOpacity
-          key={job.id}
-          onPress={() => toggleCardExpansion(job.id)} // Toggle expansion
-          style={[
-            styles.jobCard,
-            job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
-          ]}
-        >
-          {/* Always Visible Summary */}
-          <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
-          <Text>{job.companyName}</Text>
-          <Text>${job.total.toFixed(2)}</Text>
-
-          {/* Expanded Details */}
-          {expandedCardId === job.id && (
-            <View>
-              <Text>{job.address}</Text>
-              <Text>{job.city}</Text>
-              <Text> {job.yards}</Text>
-              <Text> {job.paymentMethod}</Text>
-              {job.notes && <Text>Notes: {job.notes}</Text>}
-
-              {/* Edit/Delete Buttons */}
-              <View style={styles.buttonRow}>
-                <Button
-                  title="Edit"
-                  onPress={() => {
-                    setEditingJobId(job.id); // Set the job ID for editing
-                    setDate(new Date(job.date));
-                    setCompanyName(job.companyName);
-                    setAddress(job.address);
-                    setCity(job.city);
-                    setYards(job.yards.toString());
-                    setTotal(job.total.toString());
-                    setPaymentMethod(job.paymentMethod);
-                    setPaymentStatus(job.paymentStatus);
-                    setCheckNumber(job.checkNumber || '');
-                    setBillingInfo(
-                      job.billingInfo
-                        ? {
-                            companyName: job.billingInfo.companyName || '',
-                            address: job.billingInfo.address || '',
-                            phone: job.billingInfo.phone || '',
-                            email: job.billingInfo.email || '',
-                          }
-                        : { companyName: '', address: '', phone: '', email: '' }
-                    );
-                    setNotes(job.notes);
-                    openModal(); // Open the modal for editing
-                  }}
-                />
-                <Button
-                  title="Delete"
-                  onPress={() => deleteJob(job.id)} // Delete the job
-                  color="#FF5C5C"
-                />
+          {/* Job Cards for the Week */}
+          {item.jobs.map((job) => (
+            <TouchableOpacity
+              key={job.id}
+              onPress={() => toggleCardExpansion(job.id)} // Toggle expansion
+              style={[
+                styles.jobCard,
+                job.paymentStatus === 'Paid' ? styles.paidCard : styles.unpaidCard,
+              ]}
+            >
+              {/* Always Visible Summary */}
+              <View style={styles.cardHeader}>
+                <Text style={styles.dateText}>{formatDate(new Date(job.date))}</Text>
+                <View style={styles.paymentContainer}>
+                  <Text style={styles.paymentText}> {job.paymentMethod}</Text>
+                  <Text style={styles.totalText}>${job.total.toFixed(2)}</Text>
+                </View>
               </View>
-            </View>
-          )}
-        </TouchableOpacity>
-      ))}
-    </View>
+              <Text style={styles.companyText} >{job.companyName}</Text>
+
+              {/* Expanded Details */}
+              {expandedCardId === job.id && (
+                <View>
+                  <Text>{job.address}</Text>
+                  <Text>{job.city}</Text>
+                  <Text> {job.yards}</Text>
+                  
+                  {job.notes && <Text>Notes: {job.notes}</Text>}
+
+                  {/* Edit/Delete Buttons */}
+                  <View style={styles.buttonRow}>
+                    <Button
+                      title="Edit"
+                      onPress={() => {
+                        setEditingJobId(job.id); // Set the job ID for editing
+                        setDate(new Date(job.date));
+                        setCompanyName(job.companyName);
+                        setAddress(job.address);
+                        setCity(job.city);
+                        setYards(job.yards.toString());
+                        setTotal(job.total.toString());
+                        setPaymentMethod(job.paymentMethod);
+                        setPaymentStatus(job.paymentStatus);
+                        setCheckNumber(job.checkNumber || '');
+                        setBillingInfo(
+                          job.billingInfo
+                            ? {
+                                companyName: job.billingInfo.companyName || '',
+                                address: job.billingInfo.address || '',
+                                phone: job.billingInfo.phone || '',
+                                email: job.billingInfo.email || '',
+                              }
+                            : { companyName: '', address: '', phone: '', email: '' }
+                        );
+                        setNotes(job.notes);
+                        openModal(); // Open the modal for editing
+                      }}
+                    />
+                    <Button
+                      title="Delete"
+                      onPress={() => deleteJob(job.id)} // Delete the job
+                      color="#FF5C5C"
+                    />
+                  </View>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
   )}
 />
 
@@ -666,6 +671,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row', // Arrange Date & Payment Type in a row
+    justifyContent: 'space-between', // Push them to opposite sides
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  paymentContainer: {
+    alignItems: 'flex-end', // Align text to the right
+  },
+  paymentText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#555', // Style to differentiate it
+  },
+  totalText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  companyText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 5,
   },
   paidCard: { backgroundColor: '#d4edda', borderColor: '#c3e6cb', borderWidth: 1 },
   unpaidCard: { backgroundColor: '#f8d7da', borderColor: '#f5c6cb', borderWidth: 1 },
